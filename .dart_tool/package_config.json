@@ -1,0 +1,13 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "dart_reflection_test",
+      "rootUri": "../",
+      "packageUri": "lib/"
+    }
+  ],
+  "generated": "2020-06-01T20:11:08.321111Z",
+  "generator": "pub",
+  "generatorVersion": "2.9.0-8.2.beta"
+}
