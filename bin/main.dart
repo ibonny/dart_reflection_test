@@ -1,9 +1,17 @@
 import '../lib/snooker.dart';
 
-@Named("testout")
-@Component
+// @Component
+// @Named("testout")
 class MyTestClass {
   MyTestClass() {}
+}
+
+@Configuration
+class MyConfig {
+  @Bean
+  MyTestClass getMyClass() {
+    return MyTestClass();
+  }
 }
 
 @Autowired
