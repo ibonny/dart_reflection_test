@@ -22,9 +22,21 @@ class Snooker {
   static Map getDeclarations() {
     final mirrors = currentMirrorSystem();
 
-    final f = mirrors.isolate.rootLibrary.declarations;
+    var finalMap = {};
 
-    return f;
+    // Get all the declarations from the rootLibrary (usually main library) and add them to the map.
+    mirrors.isolate.rootLibrary.declarations.forEach((key, value) {
+      finalMap[key] = value;
+    });
+
+    // Get all the declarations from the libraries in the root library and add them to the map.
+    mirrors.isolate.rootLibrary.libraryDependencies.forEach((element) {
+      element.targetLibrary.declarations.forEach((key, value) {
+        finalMap[key] = value;
+      });
+    });
+
+    return finalMap;
   }
 
   static String getName(item) {
@@ -57,8 +69,6 @@ class Snooker {
         }
       }
     });
-
-    print("Registrations: $registrations");
   }
 
   static void processAutowired() {
@@ -83,19 +93,16 @@ class Snooker {
         }
 
         if (registrations[v.type] is MethodMirror) {
-          print("This is a method mirror.");
-
           MethodMirror m = registrations[v.type];
 
-          print("Owning class: ${owningClass[v.type]}");
+          final cm = owningClass[v.type];
 
-          ClassMirror cm = owningClass[v.type];
+          final mm = reflect(cm);
 
-          print(cm.invoke(m.simpleName, []));
+          // Invoke the function to create the class.
+          lib.setField(k, mm.invoke(m.simpleName, []).reflectee);
 
           return;
-
-          // lib.setField(k, m.reflectee());
         }
 
         lib.setField(k, v.type.newInstance(Symbol(''), []).reflectee);
@@ -106,7 +113,8 @@ class Snooker {
   static dynamic getObject(String name) {
     if (!registrations.containsKey(name)) return null;
 
-    return (registrations[name] as ClassMirror).newInstance(Symbol(''), []).reflectee;
+    return (registrations[name] as ClassMirror)
+        .newInstance(Symbol(''), []).reflectee;
   }
 
   static bool isBean(item) {
@@ -134,8 +142,6 @@ class Snooker {
           continue;
         }
 
-        print(v.declarations);
-
         v.declarations.forEach((k2, v2) {
           if (v2.metadata.length == 0) {
             return;
@@ -147,7 +153,7 @@ class Snooker {
 
           registrations[v2.returnType] = v2;
 
-          owningClass[v2.returnType] = v;
+          owningClass[v2.returnType] = v.newInstance(Symbol(''), []).reflectee;
         });
       }
     });
@@ -158,7 +164,7 @@ class Snooker {
 
     getAllConfigurations();
 
-    print(registrations);
+    print("Registrations: $registrations");
 
     processAutowired();
   }

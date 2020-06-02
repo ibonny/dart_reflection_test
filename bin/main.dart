@@ -1,24 +1,49 @@
 import '../lib/snooker.dart';
 
+import 'support_class.dart';
+
+abstract class BaseClass {
+  String testout();
+}
+
 // @Component
 // @Named("testout")
-class MyTestClass {
+class MyTestClass implements BaseClass {
   MyTestClass() {}
+
+  @override
+  String testout() {
+    return "First String";
+  }
+}
+
+class SecondTestClass implements BaseClass {
+  MyTestClass() {}
+
+  @override
+  String testout() {
+    return "Second String";
+  }
 }
 
 @Configuration
 class MyConfig {
   @Bean
-  MyTestClass getMyClass() {
+  BaseClass getMyClass() {
     return MyTestClass();
   }
 }
 
 @Autowired
-MyTestClass v;
+BaseClass v;
+
+@Autowired
+SupportClass sc;
 
 void main() {
   Snooker.run();
 
-  print(v);
+  print(v.testout());
+
+  print(sc.testout());
 }
