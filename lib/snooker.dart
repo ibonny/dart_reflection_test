@@ -17,6 +17,8 @@ class Named {
 class Snooker {
   static Map<Object, Object> registrations = Map();
 
+  static Map<Object, Object> owningClass = Map();
+
   static Map getDeclarations() {
     final mirrors = currentMirrorSystem();
 
@@ -85,7 +87,15 @@ class Snooker {
 
           MethodMirror m = registrations[v.type];
 
-          lib.setField(k, m());
+          print("Owning class: ${owningClass[v.type]}");
+
+          ClassMirror cm = owningClass[v.type];
+
+          print(cm.invoke(m.simpleName, []));
+
+          return;
+
+          // lib.setField(k, m.reflectee());
         }
 
         lib.setField(k, v.type.newInstance(Symbol(''), []).reflectee);
@@ -136,6 +146,8 @@ class Snooker {
           }
 
           registrations[v2.returnType] = v2;
+
+          owningClass[v2.returnType] = v;
         });
       }
     });
