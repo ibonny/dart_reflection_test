@@ -1,4 +1,4 @@
-import '../lib/snooker.dart';
+import 'package:dart_reflection_test/snooker.dart';
 
 class SupportClass {
   String testout() => "This is a test string.";

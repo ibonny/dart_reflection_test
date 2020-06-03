@@ -134,10 +134,24 @@ class Snooker {
       return holding[Symbol(name)];
     }
 
-    if (!registrations.containsKey(name)) return null;
+    if (registrations.containsKey(name)) {
+      return (registrations[name] as ClassMirror)
+          .newInstance(Symbol(''), []).reflectee;
+    }
 
-    return (registrations[name] as ClassMirror)
-        .newInstance(Symbol(''), []).reflectee;
+    var foundObj = null;
+
+    registrations.forEach((k, v) {
+      if (k.toString() == "ClassMirror on '$name'") {
+        foundObj = k;
+      }
+    });
+
+    if (foundObj != null) {
+      return foundObj.newInstance(Symbol(''), []).reflectee;
+    }
+
+    return null;
   }
 
   static bool isBean(item) {

@@ -1,4 +1,4 @@
-import '../lib/snooker.dart';
+import 'package:dart_reflection_test/snooker.dart';
 
 import 'support_class.dart';
 
@@ -33,6 +33,24 @@ class MyConfig {
     return SecondTestClass();
   }
 }
+
+@Component
+class TestService {
+  String stuffString() {
+    return "Yeah, it works.";
+  }
+}
+
+// @Component
+// class TestingClass {
+//   // This doesn't work yet.
+//   @Autowired
+//   TestService ts;
+
+//   String testout() {
+//     return ts.stuffString();
+//   }
+// }
 
 @Autowired
 BaseClass v;
