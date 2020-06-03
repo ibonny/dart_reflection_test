@@ -48,7 +48,7 @@ class LoadedConfigClass {
 }
 
 void main(List<String> args) {
-  Snooker.run();
+  Snooker.init();
 
   test('Autowires should get values from Component classes.', () {
     expect(base, isNot(null));

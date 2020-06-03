@@ -100,9 +100,9 @@ class Snooker {
 
         if (name != null) {
           registrations[name] = v;
-        } else {
-          registrations[v] = v;
         }
+
+        registrations[v] = v;
       }
     });
   }
@@ -144,30 +144,36 @@ class Snooker {
     });
 
     getDeclarations().forEach((k, v) {
-      if (v.metadata.length == 0) {
+      if (!isAutowired(v)) {
         return;
       }
 
-      if (v.metadata.first.reflectee == "Autowired") {
-        if (!registrations.containsKey(v.type)) {
-          return;
-        }
+      final sn = v.type.simpleName;
 
-        if (registrations[v.type] is MethodMirror) {
-          MethodMirror m = registrations[v.type];
+      if (holding.containsKey(sn)) {
+        lib.setField(k, holding[sn]);
 
-          final cm = owningClass[v.type];
-
-          final mm = reflect(cm);
-
-          // Invoke the function to create the class.
-          lib.setField(k, mm.invoke(m.simpleName, []).reflectee);
-
-          return;
-        }
-
-        lib.setField(k, v.type.newInstance(Symbol(''), []).reflectee);
+        return;
       }
+
+      if (!registrations.containsKey(v.type)) {
+        return;
+      }
+
+      if (registrations[v.type] is MethodMirror) {
+        MethodMirror m = registrations[v.type];
+
+        final cm = owningClass[v.type];
+
+        final mm = reflect(cm);
+
+        // Invoke the function to create the class.
+        lib.setField(k, mm.invoke(m.simpleName, []).reflectee);
+
+        return;
+      }
+
+      lib.setField(k, v.type.newInstance(Symbol(''), []).reflectee);
     });
   }
 
@@ -182,14 +188,26 @@ class Snooker {
     }
 
     var foundObj = null;
+    var destination = null;
 
     registrations.forEach((k, v) {
       if (k.toString() == "ClassMirror on '$name'") {
         foundObj = k;
+        destination = v;
       }
     });
 
     if (foundObj != null) {
+      // If invoked via a @Bean, use the method to produce the class...
+      if (destination is MethodMirror) {
+        final cm = owningClass[foundObj];
+
+        final mm = reflect(cm);
+
+        return mm.invoke(destination.simpleName, []).reflectee;
+      }
+
+      // ... otherwise use the class.
       return foundObj.newInstance(Symbol(''), []).reflectee;
     }
 
@@ -252,89 +270,100 @@ class Snooker {
     });
   }
 
+  static PropertySource isPropertySource(item) {
+    if (item.metadata == null || item.metadata.length == 0) {
+      return null;
+    }
+
+    for (var meta in item.metadata) {
+      if (meta.reflectee is PropertySource) {
+        return meta.reflectee;
+      }
+    }
+
+    return null;
+  }
+
   static void loadConfigFiles() {
     // Loop through all definitions in the main and imported libraries.
     getDeclarations().forEach((key, value) {
-      // If the symbol has no metadata, skip to the next.
-      if (value.metadata.length == 0) {
+      // Check to see if the item in quetsion has a PropertySource tag...
+      PropertySource ps = isPropertySource(value);
+
+      // ... if not, go to the next.
+      if (ps == null) {
         return;
       }
 
-      // Skip through all the attributes in the metadata...
-      for (var attr in value.metadata) {
-        // ... and skip it if it's not a PropertySource.
-        if (!(attr.reflectee is PropertySource)) {
-          continue;
-        }
+      // ... and if it is, register it in the master list.
+      registrations[value] = value;
 
-        // If it is...
-        PropertySource ps = attr.reflectee;
+      var lines;
 
-        var lines;
-
-        // ... grab the lines referenced in the filename,
-        if (ps.filename != "") {
-          lines = File(ps.filename).readAsLinesSync();
-        } else {
-          lines = ps.lines;
-        }
-
-        // ... and interpret them as a config file.
-        final config = Config.fromStrings(lines);
-
-        // Then, go through all the fields in the PropertySource'd class.
-        value.declarations.forEach((k2, v2) {
-          // Skip if there is no metadata attached.
-          if (v2.metadata.length == 0) {
-            return;
-          }
-
-          // Skip if the metadata is not a @Value annotation.
-          if (!isValue(v2)) {
-            return;
-          }
-
-          // Get the name attached to the @Value annotation.
-          String valueKey = v2.metadata.first.reflectee.name;
-
-          // If the key mentioned in the @Value annotation doesn't exist, skip.
-          // (Optionally throw an exception here.)
-          if (!config.defaults().containsKey(valueKey)) {
-            return;
-          }
-
-          // Instantiate the object that is @PropertySource'd in a holding area if
-          // it doesn't already exist.
-          if (!holding.containsKey(key)) {
-            holding[key] = value.newInstance(Symbol(''), []).reflectee;
-          }
-
-          // Get a reference to it.
-          final ref = reflect(holding[key]);
-
-          // And set the variable in question to the @Value's value.
-          // Cast it to an int if an int.
-          if (v2.type.reflectedType.toString() == "int") {
-            ref.setField(k2, int.parse(config.defaults()[valueKey]));
-          }
-          if (v2.type.reflectedType.toString() == "double") {
-            ref.setField(k2, double.parse(config.defaults()[valueKey]));
-          } else {
-            ref.setField(k2, config.defaults()[valueKey]);
-          }
-        });
+      // ... then, grab the lines referenced in the filename,
+      if (ps.filename != "") {
+        lines = File(ps.filename).readAsLinesSync();
+      } else {
+        lines = ps.lines;
       }
+
+      // ... and interpret them as a config file.
+      final config = Config.fromStrings(lines);
+
+      // Then, go through all the fields in the PropertySource'd class.
+      value.declarations.forEach((k2, v2) {
+        // Skip if there is no metadata attached.
+        if (v2.metadata.length == 0) {
+          return;
+        }
+
+        // Skip if the metadata is not a @Value annotation.
+        if (!isValue(v2)) {
+          return;
+        }
+
+        // Get the name attached to the @Value annotation.
+        String valueKey = v2.metadata.first.reflectee.name;
+
+        // If the key mentioned in the @Value annotation doesn't exist, skip.
+        // (Optionally throw an exception here.)
+        if (!config.defaults().containsKey(valueKey)) {
+          return;
+        }
+
+        // Instantiate the object that is @PropertySource'd in a holding area if
+        // it doesn't already exist.
+        if (!holding.containsKey(key)) {
+          holding[key] = value.newInstance(Symbol(''), []).reflectee;
+        }
+
+        // Get a reference to it.
+        final ref = reflect(holding[key]);
+
+        // And set the variable in question to the @Value's value.
+        // Cast it to an int if an int.
+        if (v2.type.reflectedType.toString() == "int") {
+          ref.setField(k2, int.parse(config.defaults()[valueKey]));
+        }
+        if (v2.type.reflectedType.toString() == "double") {
+          ref.setField(k2, double.parse(config.defaults()[valueKey]));
+        } else {
+          ref.setField(k2, config.defaults()[valueKey]);
+        }
+      });
     });
   }
 
-  static run() {
+  static init({bool debug = false}) {
     getAllComponents();
 
     getAllConfigurations();
 
     loadConfigFiles();
 
-    print("Registrations: $registrations");
+    if (debug) {
+      print("Registrations: $registrations");
+    }
 
     processAutowired();
   }

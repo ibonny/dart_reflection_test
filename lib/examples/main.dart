@@ -9,8 +9,6 @@ abstract class BaseClass {
 @Component
 @Named("testout")
 class MyTestClass implements BaseClass {
-  MyTestClass() {}
-
   @override
   String testout() {
     return "First String";
@@ -59,7 +57,7 @@ BaseClass v;
 SupportClass sc;
 
 void main() {
-  Snooker.run();
+  Snooker.init(debug: true);
 
   print(v.testout());
 
@@ -74,4 +72,8 @@ void main() {
   print(mcc.third);
 
   print(named);
+
+  final named2 = Snooker.getObject("MyTestClass");
+
+  print(named2);
 }
