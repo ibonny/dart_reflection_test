@@ -37,3 +37,10 @@ final myConfigClass = Snooker.getObject("ConfigClass");
 
 print(myConfigClass.valueProperty);
 ```
+
+Another restriction that holds right now is that ``@Autowired`` tags don't work in ``@Component`` classes.
+This will be implemented soon to assist with dependency injection of services, but right now, only library
+``@Autowired`` injection is supported.
+
+For ``@Value`` annotations, String, int and double types are supported, and auto-converted from String variables
+within the config file.
