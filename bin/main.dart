@@ -30,7 +30,7 @@ class SecondTestClass implements BaseClass {
 class MyConfig {
   @Bean
   BaseClass getMyClass() {
-    return MyTestClass();
+    return SecondTestClass();
   }
 }
 
@@ -46,4 +46,10 @@ void main() {
   print(v.testout());
 
   print(sc.testout());
+
+  final mcc = Snooker.getObject("MyConfigClass");
+
+  print(mcc.first);
+
+  print(mcc.third);
 }

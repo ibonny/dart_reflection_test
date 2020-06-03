@@ -2,12 +2,18 @@
   "configVersion": 2,
   "packages": [
     {
+      "name": "ini",
+      "rootUri": "file:///C:/Users/ibonny/AppData/Roaming/Pub/Cache/hosted/pub.dartlang.org/ini-2.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
       "name": "dart_reflection_test",
       "rootUri": "../",
       "packageUri": "lib/"
     }
   ],
-  "generated": "2020-06-01T20:11:08.321111Z",
+  "generated": "2020-06-03T00:33:44.405197Z",
   "generator": "pub",
-  "generatorVersion": "2.9.0-8.2.beta"
+  "generatorVersion": "2.8.1"
 }

@@ -11,3 +11,12 @@ class SupportConfig {
     return SupportClass();
   }
 }
+
+@PropertySource("testout.ini")
+class MyConfigClass {
+  @Value("first.value")
+  String first;
+
+  @Value("third.value")
+  double third;
+}

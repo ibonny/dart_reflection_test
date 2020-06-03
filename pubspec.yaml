@@ -1,1 +1,4 @@
 name: dart_reflection_test
+
+dependencies:
+  ini: ^2.0.1
