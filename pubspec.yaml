@@ -2,3 +2,7 @@ name: dart_reflection_test
 
 dependencies:
   ini: ^2.0.1
+  stack_trace: ^1.9.3
+
+dev_dependencies:
+  test: ^1.14.6

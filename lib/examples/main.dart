@@ -6,8 +6,8 @@ abstract class BaseClass {
   String testout();
 }
 
-// @Component
-// @Named("testout")
+@Component
+@Named("testout")
 class MyTestClass implements BaseClass {
   MyTestClass() {}
 
@@ -67,7 +67,11 @@ void main() {
 
   final mcc = Snooker.getObject("MyConfigClass");
 
+  final named = Snooker.getObject("testout");
+
   print(mcc.first);
 
   print(mcc.third);
+
+  print(named);
 }

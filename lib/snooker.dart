@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:mirrors';
 
 import 'package:ini/ini.dart';
+import 'package:stack_trace/stack_trace.dart';
 
 const Component = "Component";
 
@@ -20,7 +21,9 @@ class Value {
 class PropertySource {
   final String filename;
 
-  const PropertySource(this.filename);
+  final List<String> lines;
+
+  const PropertySource(this.filename, [this.lines]);
 }
 
 class Named {
@@ -72,13 +75,27 @@ class Snooker {
     return null;
   }
 
+  static bool isComponent(item) {
+    if (item.metadata.length == 0) {
+      return false;
+    }
+
+    for (var i in item.metadata) {
+      if (i.reflectee == "Component") {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   static void getAllComponents() {
     getDeclarations().forEach((k, v) {
       if (v.metadata.length == 0) {
         return;
       }
 
-      if (v.metadata.first.reflectee == "Component") {
+      if (isComponent(v)) {
         final name = getName(v);
 
         if (name != null) {
@@ -90,13 +107,38 @@ class Snooker {
     });
   }
 
+  static bool isAutowired(item) {
+    if (item.metadata.length == 0) {
+      return false;
+    }
+
+    for (var i in item.metadata) {
+      if (i.reflectee == "Autowired") {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   static void processAutowired() {
     final mirrors = currentMirrorSystem();
 
     var lib;
+    var libName;
+
+    // Grab the library name from the list of libraries in the stack trace.
+    for (var frame in Trace.current().frames) {
+      if (frame.member == "main") {
+        libName = frame.library;
+      }
+    }
+
+    // Conversion for Windows based packages.
+    libName = libName.replaceAll("\\", "/");
 
     mirrors.libraries.forEach((k, v) {
-      if (k.toString().contains("main.dart")) {
+      if (k.toString().contains(libName)) {
         lib = v;
       }
     });
@@ -228,8 +270,14 @@ class Snooker {
         // If it is...
         PropertySource ps = attr.reflectee;
 
+        var lines;
+
         // ... grab the lines referenced in the filename,
-        final lines = File(ps.filename).readAsLinesSync();
+        if (ps.filename != "") {
+          lines = File(ps.filename).readAsLinesSync();
+        } else {
+          lines = ps.lines;
+        }
 
         // ... and interpret them as a config file.
         final config = Config.fromStrings(lines);

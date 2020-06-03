@@ -12,7 +12,7 @@ class SupportConfig {
   }
 }
 
-@PropertySource("testout.ini")
+@PropertySource("lib/examples/testout.ini")
 class MyConfigClass {
   @Value("first.value")
   String first;
