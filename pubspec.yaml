@@ -1,5 +1,8 @@
 name: dart_reflection_test
 
+environment:
+  sdk: ">=2.0.0 <3.0.0"
+
 dependencies:
   ini: ^2.0.1
   stack_trace: ^1.9.3
